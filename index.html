@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<title>PASE-MASTER</title>
+<title>PASE MASTER</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Cpath d='M20 44V20h11a8 8 0 0 1 0 16h-5v8z' fill='%23ffffff'/%3E%3Ccircle cx='44' cy='42' r='4' fill='%2322d3ee'/%3E%3C/svg%3E">
 <style>
   :root {
@@ -241,7 +241,7 @@
 <!-- ЛОГИН -->
 <div class="login-screen" id="login-screen">
   <div class="login-card">
-    <h1>PASE-MASTER</h1>
+    <h1>PASE MASTER</h1>
     <div class="sub">Таск-менеджер · вход для сотрудников</div>
     <label>Логин (email)</label>
     <input type="text" id="login-email" autocomplete="username" placeholder="you@example.com">
@@ -257,7 +257,7 @@
 <!-- ПРИЛОЖЕНИЕ -->
 <div class="app hidden" id="app">
   <header class="top">
-    <h1>PASE-MASTER</h1>
+    <h1>PASE MASTER</h1>
     <span class="date" id="hdr-date"></span>
     <span class="clock" id="hdr-clock"></span>
     <span class="spacer"></span>
@@ -558,7 +558,7 @@ function renderCards(){
     const card=document.createElement("div"); card.className="emp-card"+(emp.is_boss?" is-boss":"");
     let html='<div class="emp-head"><div class="avatar" style="background:'+(emp.color||"#6366f1")+'">'+initials(emp.name)+'</div>'+
       '<div class="emp-meta"><div class="emp-name">'+esc(emp.name)+'</div><div class="emp-role">'+esc(emp.role_title||"")+'</div></div>'+
-      (emp.is_boss?'<span class="emp-badge">Рук.</span>':'')+'</div>';
+      (emp.is_boss?'<span class="emp-badge">Кат. А</span>':'')+'</div>';
     if(next){ const u=urgency(next); html+='<div class="emp-nextdl'+(u==="red"?" urgent":"")+'"><span>Ближайший: '+fmtDL(next.deadline)+'</span><span>'+fmtLeft(next)+'</span></div>'; }
     else html+='<div class="emp-nextdl empty">Активных задач нет</div>';
     if(mine.length===0) html+='<div class="emp-empty">Задач не назначено</div>';
@@ -942,7 +942,7 @@ function renderTeam(){
     row.innerHTML='<span class="mini-av" style="width:30px;height:30px;border-radius:8px;font-size:12px;background:'+(e.color||"#6366f1")+'">'+initials(e.name)+'</span>'+
       '<input class="tname" value="'+esc(e.name)+'" style="flex:1;border:1px solid var(--border);border-radius:7px;padding:6px 9px;font-size:13.5px;font-family:inherit;color:var(--text);outline:none">'+
       '<input class="trole" value="'+esc(e.role_title||"")+'" style="width:130px;border:1px solid var(--border);border-radius:7px;padding:6px 9px;font-size:12.5px;font-family:inherit;color:var(--muted);outline:none">'+
-      (e.is_boss?'<span style="font-size:10px;font-weight:700;color:var(--ink-soft);background:#eef0ff;padding:2px 7px;border-radius:20px">Рук.</span>':'');
+      (e.is_boss?'<span style="font-size:10px;font-weight:700;color:var(--ink-soft);background:#eef0ff;padding:2px 7px;border-radius:20px">Кат. А</span>':'');
     const nameI=row.querySelector(".tname"),roleI=row.querySelector(".trole");
     const saveRow=async()=>{ const patch={name:nameI.value.trim()||e.name,role_title:roleI.value};
       const {error}=await sb.from("profiles").update(patch).eq("id",e.id);
@@ -1208,7 +1208,7 @@ async function enterApp(){
   me=await fetchMe();
   if(!me)return;
   if(me._noProfile){ flash("Профиль не найден в базе — обратитесь к руководителю",true); }
-  document.getElementById("hdr-who").innerHTML="Вы: <b>"+esc(me.name)+"</b>"+(me.is_boss?" (руководитель)":"");
+  document.getElementById("hdr-who").innerHTML="Вы: <b>"+esc(me.name)+"</b>"+(me.is_boss?" (Категория А)":"");
   // сотруднику прячем кнопки руководителя
   document.getElementById("btn-add").classList.toggle("hidden",!isBoss());
   document.getElementById("btn-team").classList.toggle("hidden",!isBoss());
