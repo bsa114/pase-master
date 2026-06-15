@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>PASE-MASTER</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Cpath d='M20 44V20h11a8 8 0 0 1 0 16h-5v8z' fill='%23ffffff'/%3E%3Ccircle cx='44' cy='42' r='4' fill='%2322d3ee'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --ink:#4f46e5; --ink-soft:#6366f1; --bg:#f6f7fb; --panel:#fff; --border:#e6e8f0;
+    --line:#eef0f6; --muted:#8a90a6; --accent:#06b6d4; --urgent:#ef4444; --urgent-bg:#fef2f2;
+    --warn:#f59e0b; --warn-bg:#fffbeb; --shadow:rgba(79,70,229,.10);
+    --s-new:#6366f1; --s-work:#10b981; --s-review:#f59e0b; --s-done:#9ca3af; --s-cancel:#ef4444;
+    --radius:14px; --text:#1e2233;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:#1e2233;min-height:100vh;-webkit-font-smoothing:antialiased}
+  .app{max-width:1280px;margin:0 auto;padding:22px 18px 80px}
+  .hidden{display:none!important}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .view.active{animation:fadeUp .25s ease}
+
+  /* ---- Логин ---- */
+  .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(1200px 600px at 50% -10%,#eef1ff 0%,var(--bg) 60%)}
+  .login-card{background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:0 20px 60px var(--shadow);padding:36px 32px;width:100%;max-width:400px}
+  .login-card h1{font-family:inherit;font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;background:linear-gradient(90deg,var(--ink),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .login-card .sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+  .login-card label{display:block;font-size:13px;font-weight:600;color:#3a4060;margin-bottom:6px;margin-top:16px}
+  .login-card input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s;background:#fcfcfe}
+  .login-card input:focus{border-color:var(--ink-soft);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+  .login-card button{width:100%;margin-top:22px;background:var(--ink);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s,transform .05s}
+  .login-card button:hover{background:var(--ink-soft)}
+  .login-card button:active{transform:translateY(1px)}
+  .login-card button:disabled{opacity:.6;cursor:default}
+  .login-err{color:var(--urgent);font-size:13px;margin-top:14px;display:none}
+  .login-err.show{display:block}
+  .login-ok{color:#1f8a4c;font-size:13px;margin-top:14px;display:none;line-height:1.5}
+  .login-ok.show{display:block}
+  .login-card button.login-link{background:none;border:none;color:var(--ink-soft);font-size:13px;cursor:pointer;text-decoration:underline;padding:0;margin-top:16px;width:auto;font-weight:500;box-shadow:none}
+  .login-card button.login-link:hover{background:none;color:var(--ink)}
+  .login-card button.login-link:active{transform:none}
+  .login-card.reset-mode .reset-hide{display:none}
+
+  /* ---- Шапка ---- */
+  header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+  header.top h1{font-family:inherit;font-size:22px;font-weight:800;letter-spacing:-.02em;background:linear-gradient(90deg,var(--ink),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  header.top .date{font-size:13px;color:var(--ink-soft)}
+  header.top .clock{font-variant-numeric:tabular-nums;font-weight:600}
+  header.top .spacer{flex:1}
+  header.top .who{font-size:13px;color:var(--muted)}
+  header.top .who b{color:var(--text)}
+  .btn{border:none;border-radius:11px;font-size:14px;font-weight:600;padding:10px 16px;cursor:pointer;transition:all .15s}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--ink);color:#fff;box-shadow:0 6px 16px var(--shadow)}.btn-primary:hover{background:var(--ink-soft)}
+  .btn-ghost{background:#fff;color:#3a4060;border:1px solid var(--border)}.btn-ghost:hover{background:#f3f4fb;border-color:#d6d9e6}
+
+  /* ---- Напоминалка ---- */
+  .reminder-bar{background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px 18px;margin-bottom:18px;box-shadow:0 6px 20px var(--shadow);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .reminder-bar .rb-title{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+  .badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:20px;font-size:12px;font-weight:700;color:#fff;background:var(--muted)}
+  .badge.red{background:var(--urgent)}.badge.amber{background:var(--warn)}
+  .rb-chips{display:flex;gap:8px;flex-wrap:wrap}
+  .rb-chip{font-size:12.5px;padding:4px 10px;border-radius:20px;background:#f4f5fb;color:var(--ink-soft);cursor:pointer;border:1px solid transparent;transition:all .15s}
+  .rb-chip:hover{border-color:var(--ink-soft)}
+  .rb-chip.red{background:var(--urgent-bg);color:var(--urgent);font-weight:600}
+  .rb-chip.amber{background:var(--warn-bg);color:#a87d09;font-weight:600}
+  .rb-toggle{margin-left:auto;font-size:13px;color:var(--ink-soft);background:none;border:none;cursor:pointer;text-decoration:underline}
+  .reminder-list{margin-top:10px;width:100%;display:none;flex-direction:column;gap:6px}
+  .reminder-list.show{display:flex}
+  .rl-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;cursor:pointer}
+  .rl-item:hover{background:#f5f6fc}
+  .rl-item.red{border-color:var(--urgent);background:var(--urgent-bg)}
+  .rl-item.amber{border-color:#f0e2b0;background:var(--warn-bg)}
+  .rl-when{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .rl-when.red{color:var(--urgent);font-weight:700}
+
+  nav.tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+  nav.tabs button{background:transparent;border:1px solid transparent;color:var(--muted);font-size:14px;font-weight:500;padding:9px 16px;border-radius:11px;cursor:pointer;transition:all .15s}
+  nav.tabs button:hover{color:var(--ink);background:#fff}
+  nav.tabs button.active{background:#fff;color:var(--ink);border-color:var(--border);box-shadow:0 4px 14px var(--shadow);font-weight:700}
+  .view{display:none}.view.active{display:block}
+
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+  .emp-card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 6px 20px var(--shadow);display:flex;flex-direction:column;transition:box-shadow .15s,transform .15s}
+  .emp-card:hover{box-shadow:0 12px 30px var(--shadow);transform:translateY(-2px)}
+  .emp-card.is-boss{border-color:var(--ink-soft);box-shadow:0 6px 20px rgba(99,102,241,.16)}
+  .emp-head{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+  .avatar{width:42px;height:42px;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff}
+  .emp-meta{flex:1;min-width:0}.emp-name{font-weight:600;font-size:15px}.emp-role{font-size:12.5px;color:var(--muted)}
+  .emp-badge{font-size:11px;font-weight:700;color:var(--ink-soft);background:#eef0ff;padding:2px 8px;border-radius:20px}
+  .emp-nextdl{font-size:12.5px;padding:7px 10px;border-radius:8px;margin-bottom:10px;background:#f5f6fc;color:var(--ink-soft);display:flex;justify-content:space-between;gap:8px}
+  .emp-nextdl.urgent{background:var(--urgent-bg);color:var(--urgent);font-weight:600}
+  .emp-nextdl.empty{color:var(--muted)}
+  .emp-tasks{list-style:none;display:flex;flex-direction:column;gap:7px;max-height:280px;overflow-y:auto}
+  .emp-task{border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13.5px;display:flex;flex-direction:column;gap:5px;transition:border-color .15s}
+  .emp-task.urgent{border-color:var(--urgent);background:var(--urgent-bg)}
+  .emp-task.amber{border-color:#f0e2b0;background:var(--warn-bg)}
+  .emp-task.t-done,.emp-task.t-cancel{opacity:.6}
+  .emp-task .et-title{line-height:1.35}
+  .emp-task.t-done .et-title{text-decoration:line-through;color:var(--muted)}
+  .emp-task.t-cancel .et-title{text-decoration:line-through;color:var(--s-cancel)}
+  .et-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .et-dl{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .et-dl.urgent{color:var(--urgent);font-weight:700}
+  .emp-empty{font-size:13px;color:var(--muted);font-style:italic;padding:8px 2px}
+  .status-pill{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;color:#fff;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+  .st-new{background:var(--s-new)}.st-work{background:var(--s-work)}.st-review{background:var(--s-review)}.st-done{background:var(--s-done)}.st-cancel{background:var(--s-cancel)}
+
+  .kanban{display:grid;grid-template-columns:repeat(5,minmax(200px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+  .kan-col{background:#f4f5fb;border:1px solid var(--border);border-radius:14px;padding:11px;min-height:120px;transition:background .15s,border-color .15s}
+  .kan-col.drag-over{background:#e6e9ff;border-color:var(--ink-soft)}
+  .kan-col h3{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+  .kan-col h3 .dot{width:9px;height:9px;border-radius:50%}
+  .kan-col h3 .cnt{margin-left:auto;font-size:11px;color:var(--muted);background:#fff;padding:1px 8px;border-radius:20px}
+  .kan-list{display:flex;flex-direction:column;gap:8px;min-height:40px}
+  .kan-card{background:#fff;border:1px solid var(--border);border-radius:11px;padding:10px 11px;font-size:13px;cursor:grab;box-shadow:0 2px 6px var(--shadow);transition:box-shadow .15s,opacity .15s,transform .1s}
+  .kan-card:hover{box-shadow:0 6px 16px var(--shadow);transform:translateY(-1px)}
+  .kan-card:active{cursor:grabbing}.kan-card.dragging{opacity:.45}
+  .kan-card.urgent{border-color:var(--urgent);background:var(--urgent-bg)}
+  .kan-card.amber{border-color:#f0e2b0;background:var(--warn-bg)}
+  .kan-card .kc-title{line-height:1.35;margin-bottom:6px}
+  .kan-card .kc-foot{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .mini-av{width:20px;height:20px;border-radius:6px;color:#fff;font-size:9.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-right:3px}
+  .kc-dl{font-size:11px;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}.kc-dl.urgent{color:var(--urgent);font-weight:700}
+
+  .gantt-controls{display:flex;gap:14px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .seg{display:inline-flex;background:#fff;border:1px solid var(--border);border-radius:11px;overflow:hidden}
+  .seg button{border:none;background:transparent;padding:7px 14px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s}
+  .seg button.active{background:var(--ink);color:#fff;font-weight:600}
+  .navbtn{background:#fff;border:1px solid var(--border);border-radius:10px;width:34px;height:34px;cursor:pointer;font-size:16px;color:var(--ink-soft);transition:all .15s}.navbtn:hover{background:#f3f4fb;border-color:#d6d9e6}
+  .period-label{font-weight:600;font-size:15px;min-width:180px;text-align:center}
+  .emp-multi{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+  .emp-toggle{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--border);border-radius:20px;padding:5px 11px 5px 5px;cursor:pointer;font-size:13px;background:#fff;user-select:none;transition:all .15s}
+  .emp-toggle:hover{border-color:var(--ink-soft)}.emp-toggle.sel{border-color:var(--ink);background:#eef0ff;font-weight:600}
+  .emp-toggle .mini-av{margin:0}
+  .gantt-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:auto;box-shadow:0 6px 20px var(--shadow)}
+  table.gantt{border-collapse:collapse;width:100%;min-width:700px;font-size:13px}
+  table.gantt th,table.gantt td{border:1px solid var(--line);padding:0}
+  table.gantt thead th{background:#f4f5fb;font-weight:600;font-size:12px;color:var(--ink-soft);padding:8px 6px;position:sticky;top:0;z-index:2}
+  table.gantt thead th.today-col{background:#e6e9ff}
+  table.gantt .row-label{background:#fafbff;font-weight:600;padding:10px 12px;white-space:nowrap;position:sticky;left:0;z-index:1;min-width:150px}
+  table.gantt .row-label .rl-role{display:block;font-size:11px;color:var(--muted);font-weight:400}
+  .cell{height:100%;min-height:44px;position:relative;padding:3px;vertical-align:top}.cell.today-col{background:#eef1ff}
+  .bar{border-radius:6px;padding:3px 7px;font-size:11.5px;color:#fff;margin-bottom:3px;line-height:1.3;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar.urgent{outline:2px solid var(--urgent);outline-offset:-2px}
+  .bar.b-new{background:var(--s-new)}.bar.b-work{background:var(--s-work)}.bar.b-review{background:var(--s-review)}
+  .bar.b-done{background:var(--s-done);text-decoration:line-through}.bar.b-cancel{background:var(--s-cancel);text-decoration:line-through;opacity:.8}
+  .bar.span{opacity:.45;text-align:center;font-weight:700}
+  .gantt-empty{padding:30px;text-align:center;color:var(--muted);font-style:italic}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(30,34,51,.5);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:200;padding:16px}
+  .modal-bg.show{display:flex}
+  .modal{background:#fff;border-radius:20px;padding:26px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 70px rgba(30,34,51,.35)}
+  .modal h2{font-family:inherit;font-size:20px;font-weight:800;letter-spacing:-.01em;margin-bottom:18px;color:var(--text)}
+  .field{margin-bottom:15px}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:6px}
+  .field input[type=text],.field textarea,.field input[type=datetime-local],.field select{width:100%;border:1px solid var(--border);border-radius:11px;padding:11px 13px;font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s;background:#fcfcfe}
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--ink-soft);box-shadow:0 0 0 3px rgba(99,102,241,.13)}
+  .field textarea{resize:vertical;min-height:60px}
+  .field input:disabled,.field textarea:disabled,.field select:disabled{background:#f4f5fb;color:var(--muted);cursor:not-allowed}
+  .assignee-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:8px}
+  .assignee-chip{display:flex;align-items:center;gap:8px;border:1.5px solid var(--border);border-radius:9px;padding:7px 9px;cursor:pointer;font-size:13px;transition:all .15s;user-select:none;min-height:46px}
+  .assignee-chip .ac-text{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+  .assignee-chip .ac-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .assignee-chip .ac-role{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .assignee-chip.sel .ac-role{color:var(--ink-soft)}
+  .assignee-chip:hover{border-color:var(--ink-soft)}.assignee-chip.sel{border-color:var(--ink);background:#eef0ff;font-weight:600}
+  .assignee-chip.disabled{opacity:.5;pointer-events:none}
+  .assignee-chip .mini-av{margin:0}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+  .modal-actions button{border:none;border-radius:9px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+  .modal-actions .btn-ghost{background:#fff;border:1px solid var(--border);color:var(--ink-soft)}
+  .modal-actions .btn-danger{background:#fff;border:1px solid #f0c0c0;color:var(--urgent);margin-right:auto}
+  .field-err{font-size:12px;color:var(--urgent);margin-top:5px;display:none}.field-err.show{display:block}
+  .readonly-note{font-size:12.5px;color:var(--muted);background:#f4f5fb;border-radius:8px;padding:9px 11px;margin-bottom:4px}
+  .att-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+  .att-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-size:13px;background:#fafbff}
+  .att-item .att-ico{flex:0 0 auto;font-size:16px}
+  .att-item .att-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);cursor:pointer;text-decoration:none}
+  .att-item .att-name:hover{text-decoration:underline}
+  .att-item .att-size{flex:0 0 auto;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .att-item .att-del{flex:0 0 auto;border:none;background:none;color:#c2c9da;cursor:pointer;font-size:16px;padding:2px 5px}
+  .att-item .att-del:hover{color:var(--urgent)}
+  .att-item.uploading{opacity:.6}
+  .att-add{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .att-btn{font-size:13px;padding:8px 13px}
+  .att-hint{font-size:11.5px;color:var(--muted)}
+  .att-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:2px 0}
+  .com-count{font-size:11px;font-weight:700;color:#fff;background:var(--ink-soft);border-radius:20px;padding:1px 8px;margin-left:4px}
+  .com-list{display:flex;flex-direction:column;gap:8px;max-height:240px;overflow-y:auto;margin-bottom:10px}
+  .com-item{border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:#fafbff}
+  .com-item.unread{border-color:var(--accent);background:#ecfeff}
+  .com-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .com-head .mini-av{width:20px;height:20px;border-radius:6px;font-size:9px}
+  .com-author{font-size:12.5px;font-weight:600;color:var(--ink)}
+  .com-time{font-size:11px;color:var(--muted);margin-left:auto}
+  .com-new-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:0 0 auto}
+  .com-body{font-size:13.5px;line-height:1.45;color:var(--text);white-space:pre-wrap;word-break:break-word}
+  .com-del{border:none;background:none;color:#c2c9da;cursor:pointer;font-size:14px;padding:0 3px}
+  .com-del:hover{color:var(--urgent)}
+  .com-add{display:flex;gap:8px;align-items:flex-end}
+  .com-add textarea{flex:1;border:1px solid var(--border);border-radius:9px;padding:9px 11px;font-size:13.5px;font-family:inherit;color:var(--text);outline:none;resize:vertical;min-height:40px}
+  .com-add textarea:focus{border-color:var(--ink-soft)}
+  .com-send{padding:9px 16px;white-space:nowrap}
+  .com-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:4px 0}
+  .rb-chip.proto{background:#eef0ff;color:var(--ink-soft);font-weight:600}
+  #proto-step1{position:relative;border:2px dashed transparent;border-radius:12px;transition:all .15s;padding:2px}
+  #proto-step1.proto-drag{border-color:var(--ink-soft);background:#f4f6ff}
+  #proto-step1.proto-drag::after{content:"Отпустите файл, чтобы загрузить";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(245,247,253,.92);border-radius:10px;font-weight:600;color:var(--ink-soft);font-size:16px;pointer-events:none;z-index:5}
+  .proto-drophint{font-size:12px;color:var(--muted);margin-top:4px}
+  .cbadge{font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:2px;position:relative}
+  .cbadge.un{color:var(--accent);font-weight:700}
+  .cbadge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:2px}
+
+  .flash{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(70px);background:#10b981;color:#fff;padding:11px 20px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(16,185,129,.35);transition:transform .3s;z-index:300}
+  .flash.show{transform:translateX(-50%) translateY(0)}
+  .flash.err{background:var(--urgent)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:12px 2px 0;font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:5px}.legend .sw{width:11px;height:11px;border-radius:3px}
+  .loading{padding:40px;text-align:center;color:var(--muted)}
+  .proto-card{border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:10px;background:#fafbff}
+  .proto-card.off{opacity:.5}
+  .proto-card .pc-head{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .proto-card .pc-head input[type=checkbox]{width:18px;height:18px;flex:0 0 auto;cursor:pointer}
+  .proto-card .pc-title{flex:1;border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:14px;font-weight:600;font-family:inherit;color:var(--text);outline:none}
+  .proto-card .pc-row{display:flex;gap:9px;margin-bottom:8px;flex-wrap:wrap}
+  .proto-card .pc-row label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:3px}
+  .proto-card .pc-dl{border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;font-family:inherit;color:var(--text);outline:none}
+  .proto-card .pc-desc{width:100%;border:1px solid var(--border);border-radius:7px;padding:6px 9px;font-size:13px;font-family:inherit;color:var(--text);outline:none;resize:vertical;min-height:38px}
+  .proto-card .pc-assignees{display:flex;gap:6px;flex-wrap:wrap}
+  .pc-chip{display:inline-flex;align-items:center;gap:5px;border:1.5px solid var(--border);border-radius:18px;padding:3px 9px 3px 4px;cursor:pointer;font-size:12px;user-select:none}
+  .pc-chip.sel{border-color:var(--ink);background:#eef0ff;font-weight:600}
+  .pc-chip .mini-av{width:18px;height:18px;border-radius:5px;font-size:8.5px}
+</style>
+</head>
+<body>
+
+<!-- ЛОГИН -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <h1>PASE-MASTER</h1>
+    <div class="sub">Таск-менеджер · вход для сотрудников</div>
+    <label>Логин (email)</label>
+    <input type="text" id="login-email" autocomplete="username" placeholder="you@example.com">
+    <label>Пароль</label>
+    <input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••">
+    <button id="login-btn">Войти</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-ok" id="login-ok"></div>
+    <button class="login-link" id="forgot-link" type="button">Забыли пароль?</button>
+  </div>
+</div>
+
+<!-- ПРИЛОЖЕНИЕ -->
+<div class="app hidden" id="app">
+  <header class="top">
+    <h1>PASE-MASTER</h1>
+    <span class="date" id="hdr-date"></span>
+    <span class="clock" id="hdr-clock"></span>
+    <span class="spacer"></span>
+    <span class="who" id="hdr-who"></span>
+    <button class="btn btn-ghost" id="btn-protocol">📎 Распознать протокол</button>
+    <button class="btn btn-ghost" id="btn-team">Сотрудники</button>
+    <button class="btn btn-primary" id="btn-add">+ Новая задача</button>
+    <button class="btn btn-ghost" id="btn-logout">Выйти</button>
+  </header>
+
+  <div class="reminder-bar" id="reminder-bar">
+    <span class="rb-title">🔔 Напоминания</span>
+    <div class="rb-chips" id="rb-chips"></div>
+    <button class="rb-toggle" id="rb-toggle">Показать список</button>
+    <div class="reminder-list" id="reminder-list"></div>
+  </div>
+
+  <nav class="tabs">
+    <button data-view="cards" class="active">Карточки сотрудников</button>
+    <button data-view="kanban">Канбан отдела</button>
+    <button data-view="gantt-dept">План-график отдела</button>
+    <button data-view="gantt-emp">План-график сотрудника</button>
+  </nav>
+
+  <section class="view active" id="view-cards"><div class="cards-grid" id="cards-grid"></div></section>
+  <section class="view" id="view-kanban"><div class="kanban" id="kanban"></div></section>
+  <section class="view" id="view-gantt-dept">
+    <div class="gantt-controls">
+      <div class="seg" id="seg-dept"></div>
+      <button class="navbtn" id="dept-prev">&#8249;</button>
+      <span class="period-label" id="dept-period"></span>
+      <button class="navbtn" id="dept-next">&#8250;</button>
+    </div>
+    <div class="gantt-wrap" id="gantt-dept"></div><div class="legend" id="legend-dept"></div>
+  </section>
+  <section class="view" id="view-gantt-emp">
+    <div class="gantt-controls">
+      <div class="seg" id="seg-emp"></div>
+      <button class="navbtn" id="emp-prev">&#8249;</button>
+      <span class="period-label" id="emp-period"></span>
+      <button class="navbtn" id="emp-next">&#8250;</button>
+    </div>
+    <div class="emp-multi" id="emp-multi"></div>
+    <div class="gantt-wrap" id="gantt-emp"></div><div class="legend" id="legend-emp"></div>
+  </section>
+</div>
+
+<!-- Модалка задачи -->
+<div class="modal-bg" id="modal-bg"><div class="modal">
+  <h2 id="modal-title">Новая задача</h2>
+  <div class="readonly-note hidden" id="ro-note">Вы можете изменить только статус этой задачи.</div>
+  <div class="field"><label>Название задачи</label><input type="text" id="f-title" placeholder="Что нужно сделать"><div class="field-err" id="err-title">Введите название</div></div>
+  <div class="field"><label>Описание</label><textarea id="f-desc" placeholder="Детали, ссылки, требования"></textarea></div>
+  <div class="field"><label>Исполнители</label><div class="assignee-grid" id="f-assignees"></div><div class="field-err" id="err-assignees">Выберите хотя бы одного исполнителя</div></div>
+  <div class="field"><label>Начало (необязательно)</label><input type="datetime-local" id="f-start"></div>
+  <div class="field"><label>Срок / окончание</label><input type="datetime-local" id="f-deadline"><div class="field-err" id="err-deadline">Укажите срок</div></div>
+  <div class="field"><label>Статус</label><select id="f-status">
+    <option value="new">Новая</option><option value="work">В работе</option><option value="review">На проверке</option><option value="done">Готово</option><option value="cancel">Отменена</option>
+  </select></div>
+  <div class="field" id="att-field">
+    <label>Вложения</label>
+    <div id="att-list" class="att-list"></div>
+    <div class="att-add">
+      <input type="file" id="att-input" multiple hidden>
+      <button type="button" class="btn-ghost att-btn" id="att-pick">📎 Прикрепить файлы</button>
+      <span class="att-hint">до 25 МБ на файл</span>
+    </div>
+  </div>
+  <div class="field" id="com-field">
+    <label>Комментарии <span id="com-count" class="com-count"></span></label>
+    <div id="com-list" class="com-list"></div>
+    <div class="com-add">
+      <textarea id="com-input" placeholder="Написать комментарий…" rows="2"></textarea>
+      <button type="button" class="btn-primary com-send" id="com-send">Отправить</button>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn-danger" id="btn-delete" style="display:none">Удалить</button>
+    <button class="btn-ghost" id="btn-cancel">Отмена</button>
+    <button class="btn-primary" id="btn-save">Сохранить</button>
+  </div>
+</div></div>
+
+<!-- Модалка команды -->
+<div class="modal-bg" id="team-bg"><div class="modal">
+  <h2>Сотрудники сектора</h2>
+  <div id="team-list" class="loading">Загрузка…</div>
+  <div class="team-note" style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5">
+    Имя и роль правятся прямо здесь и сохраняются сразу. Чтобы добавить нового сотрудника, создайте ему аккаунт в Supabase (Authentication → Users), затем профиль появится в списке. Руководителя изменить нельзя.
+  </div>
+  <div class="modal-actions"><button class="btn-primary" id="team-close">Готово</button></div>
+</div></div>
+
+<!-- Модалка протокола -->
+<div class="modal-bg" id="proto-bg"><div class="modal" style="max-width:640px">
+  <h2>📎 Распознать протокол</h2>
+  <div id="proto-step1">
+    <div class="readonly-note">Вставьте текст протокола/совещания <b>или перетащите файл прямо сюда</b> (txt, docx, pdf, фото). ИИ выделит задачи, предложит исполнителей и сроки. Вы сможете отредактировать и одобрить каждую перед созданием.</div>
+    <div class="field"><textarea id="proto-text" style="min-height:180px" placeholder="Например: Обсудили запуск летней кампании. Василию подготовить баннеры к пятнице. Антонине — контент-план для соцсетей на следующую неделю. Ивану согласовать бюджет с подрядчиком до среды."></textarea></div>
+    <div class="att-add" style="margin-bottom:6px">
+      <input type="file" id="proto-file" accept=".txt,.docx,.pdf,.png,.jpg,.jpeg,.webp" hidden>
+      <button type="button" class="btn-ghost att-btn" id="proto-file-pick">📎 Загрузить файл (txt, docx, pdf, фото)</button>
+      <button type="button" class="btn-ghost att-btn hidden" id="proto-ocr-btn">🔎 Распознать как скан (OCR)</button>
+      <span class="att-hint" id="proto-file-status"></span>
+    </div>
+    <div class="proto-err field-err" id="proto-err"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="proto-cancel">Отмена</button>
+      <button class="btn-primary" id="proto-analyze">Распознать</button>
+    </div>
+  </div>
+  <div id="proto-step2" class="hidden">
+    <div class="readonly-note">Проверьте предложенные задачи. Уберите лишние, поправьте при необходимости, затем создайте.</div>
+    <div id="proto-results"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="proto-back">← Назад</button>
+      <button class="btn-primary" id="proto-create">Создать выбранные</button>
+    </div>
+  </div>
+  <div id="proto-loading" class="hidden" style="padding:30px;text-align:center;color:var(--muted)">
+    <div style="font-size:15px">Анализирую протокол…</div>
+    <div style="font-size:12.5px;margin-top:6px">Обычно занимает 5–15 секунд</div>
+  </div>
+</div></div>
+
+<div class="flash" id="flash">Сохранено</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ====== Конфиг Supabase ====== */
+const SUPABASE_URL = "https://uqyojslvgaukimyrurqx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_5ZhGpiI6RgrjuhaNK_PE2A_qYA3TNwF";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const URGENT_MS = 60*60*1000;   // < 1 час — красный
+const SOON_MS   = 24*60*60*1000; // < 24 ч — жёлтый
+
+const STATUSES=[
+  {id:"new",label:"Новая",color:"#6366f1"},
+  {id:"work",label:"В работе",color:"#10b981"},
+  {id:"review",label:"На проверке",color:"#f59e0b"},
+  {id:"done",label:"Готово",color:"#9ca3af"},
+  {id:"cancel",label:"Отменена",color:"#ef4444"}
+];
+const ST={}; STATUSES.forEach(s=>ST[s.id]=s);
+
+let me=null;              // {id,name,role_title,color,is_boss}
+let profiles=[];          // все профили
+let PROF={};              // map id->profile
+let tasks=[];             // все доступные задачи
+function isBoss(){ return me && me.is_boss; }
+function rebuildProf(){ PROF={}; profiles.forEach(p=>PROF[p.id]=p); }
+
+function initials(name){
+  const p=(name||"?").split(/[\s()]+/).filter(Boolean);
+  if(p.length===1) return p[0].slice(0,2).toUpperCase();
+  return (p[0][0]+(p[1][0]||"")).toUpperCase();
+}
+function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function nameWithRole(e){ const r=(e.role_title||"").trim(); return esc(e.name)+(r?' <span style="color:var(--muted);font-weight:400">('+esc(r)+')</span>':''); }
+
+let flashTimer=null;
+function flash(msg,isErr){ const el=document.getElementById("flash"); el.textContent=msg||"Сохранено"; el.classList.toggle("err",!!isErr); el.classList.add("show"); clearTimeout(flashTimer); flashTimer=setTimeout(()=>el.classList.remove("show"),1600); }
+
+/* ====== ВРЕМЯ/СРОЧНОСТЬ ====== */
+function msLeft(t){ return new Date(t.deadline).getTime()-Date.now(); }
+function urgency(t){ // 'red' | 'amber' | null
+  if(t.status==="done"||t.status==="cancel") return null;
+  const m=msLeft(t);
+  if(m<URGENT_MS) return "red";
+  if(m<SOON_MS) return "amber";
+  return null;
+}
+function fmtDL(iso){
+  const d=new Date(iso),now=new Date();
+  const same=d.toDateString()===now.toDateString();
+  const time=d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+  if(same) return "сегодня "+time;
+  const dd=String(d.getDate()).padStart(2,"0"),mm=String(d.getMonth()+1).padStart(2,"0");
+  return dd+"."+mm+" "+time;
+}
+function fmtLeft(t){
+  const m=msLeft(t);
+  if(t.status==="done") return "выполнено";
+  if(t.status==="cancel") return "отменена";
+  if(m<0){ const h=Math.floor(-m/3600000); if(h<1)return"просрочено"; if(h<24)return"просрочено на "+h+" ч"; return"просрочено на "+Math.floor(h/24)+" дн"; }
+  const h=Math.floor(m/3600000),mins=Math.floor((m%3600000)/60000);
+  if(m<URGENT_MS) return "осталось "+(h>0?h+" ч ":"")+mins+" мин";
+  if(h<24) return "через "+h+" ч";
+  return "через "+Math.floor(h/24)+" дн";
+}
+
+/* ====== ДАННЫЕ ====== */
+async function loadProfiles(){
+  const {data,error}=await sb.from("profiles").select("*").order("is_boss",{ascending:false});
+  if(error){ console.error(error); flash("Ошибка загрузки сотрудников",true); return; }
+  profiles=data||[]; rebuildProf();
+}
+async function loadTasks(){
+  const {data,error}=await sb.from("tasks").select("*").order("deadline",{ascending:true});
+  if(error){ console.error(error); flash("Ошибка загрузки задач",true); return; }
+  tasks=(data||[]).map(t=>({...t, assignees:t.assignees||[]}));
+}
+let commentsMeta={}; // task_id -> {count, lastAt}
+let readsMap={};     // task_id -> last_read ISO
+async function loadCommentsMeta(){
+  commentsMeta={};
+  const {data,error}=await sb.from("comments").select("task_id,created_at");
+  if(!error && data){ data.forEach(c=>{ const m=commentsMeta[c.task_id]||{count:0,lastAt:null};
+    m.count++; if(!m.lastAt||c.created_at>m.lastAt) m.lastAt=c.created_at; commentsMeta[c.task_id]=m; }); }
+}
+async function loadReads(){
+  readsMap={};
+  if(!me) return;
+  const {data,error}=await sb.from("task_reads").select("task_id,last_read").eq("user_id",me.id);
+  if(!error && data){ data.forEach(r=>readsMap[r.task_id]=r.last_read); }
+}
+function unreadCount(taskId){
+  const m=commentsMeta[taskId]; if(!m||!m.lastAt) return 0;
+  const r=readsMap[taskId];
+  if(!r) return m.count; // ни разу не открывал — все «новые»
+  return (m.lastAt>r)?1:0; // есть ли комментарии новее последнего прочтения
+}
+async function markRead(taskId){
+  if(!me) return;
+  readsMap[taskId]=new Date().toISOString();
+  await sb.from("task_reads").upsert({user_id:me.id,task_id:taskId,last_read:readsMap[taskId]});
+}
+async function refreshData(){ await Promise.all([loadProfiles(),loadTasks(),loadCommentsMeta(),loadReads()]); renderAll(); renderReminders(); }
+
+/* ====== РЕНДЕР: вкладки ====== */
+const views=document.querySelectorAll(".view");
+document.querySelectorAll("nav.tabs button").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    views.forEach(v=>v.classList.remove("active"));
+    document.getElementById("view-"+btn.dataset.view).classList.add("active");
+    renderAll();
+  });
+});
+function visibleEmployees(){
+  // для карточек/гантта: руководитель видит всех, сотрудник — только себя
+  return isBoss()? profiles : profiles.filter(p=>p.id===me.id);
+}
+
+/* ---- Напоминания ---- */
+function renderReminders(){
+  const open=tasks.filter(t=>t.status!=="done"&&t.status!=="cancel");
+  const red=open.filter(t=>urgency(t)==="red");
+  const amber=open.filter(t=>urgency(t)==="amber");
+  const overdue=red.filter(t=>msLeft(t)<0);
+  // новые комментарии: задачи с непрочитанными
+  const withUnread=tasks.filter(t=>unreadCount(t.id)>0);
+  document.getElementById("rb-chips").innerHTML=
+    '<span class="rb-chip red">Горит: <span class="badge red">'+red.length+'</span></span>'+
+    '<span class="rb-chip amber">Сегодня/сутки: <span class="badge amber">'+amber.length+'</span></span>'+
+    '<span class="rb-chip">Просрочено: <span class="badge'+(overdue.length?' red':'')+'">'+overdue.length+'</span></span>'+
+    '<span class="rb-chip proto" id="rb-comments" style="cursor:pointer">💬 Новые комментарии: <span class="badge'+(withUnread.length?' ':'')+'" style="'+(withUnread.length?'background:var(--accent)':'')+'">'+withUnread.length+'</span></span>';
+  const listEl=document.getElementById("reminder-list");
+  const items=red.concat(amber).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
+  if(items.length===0){ listEl.innerHTML='<div class="rl-item">Срочных задач нет 🎉</div>'; }
+  else listEl.innerHTML=items.map(t=>{
+    const u=urgency(t);
+    return '<div class="rl-item '+u+'" data-id="'+t.id+'"><span>'+esc(t.title)+'</span>'+
+      '<span class="rl-when '+(u==="red"?"red":"")+'">'+fmtLeft(t)+'</span></div>';
+  }).join("");
+  listEl.querySelectorAll(".rl-item[data-id]").forEach(el=>el.addEventListener("click",()=>openModal(el.dataset.id)));
+  const cc=document.getElementById("rb-comments");
+  if(cc) cc.addEventListener("click",()=>{
+    const l=document.getElementById("reminder-list");
+    if(withUnread.length===0){ l.innerHTML='<div class="rl-item">Новых комментариев нет</div>'; }
+    else l.innerHTML=withUnread.map(t=>'<div class="rl-item amber" data-id="'+t.id+'"><span>💬 '+esc(t.title)+'</span><span class="rl-when">'+(commentsMeta[t.id]?commentsMeta[t.id].count:0)+' комм.</span></div>').join("");
+    l.classList.add("show");
+    document.getElementById("rb-toggle").textContent="Скрыть список";
+    l.querySelectorAll(".rl-item[data-id]").forEach(el=>el.addEventListener("click",()=>openModal(el.dataset.id)));
+  });
+}
+document.getElementById("rb-toggle").addEventListener("click",()=>{
+  const l=document.getElementById("reminder-list"); const show=l.classList.toggle("show");
+  document.getElementById("rb-toggle").textContent=show?"Скрыть список":"Показать список";
+});
+
+/* ---- 1. Карточки ---- */
+function statusPill(s){ return '<span class="status-pill st-'+s+'">'+ST[s].label+'</span>'; }
+function renderCards(){
+  const grid=document.getElementById("cards-grid"); grid.innerHTML="";
+  visibleEmployees().forEach(emp=>{
+    const mine=tasks.filter(t=>t.assignees.includes(emp.id)).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
+    const open=mine.filter(t=>t.status!=="done"&&t.status!=="cancel");
+    const next=open[0];
+    const card=document.createElement("div"); card.className="emp-card"+(emp.is_boss?" is-boss":"");
+    let html='<div class="emp-head"><div class="avatar" style="background:'+(emp.color||"#6366f1")+'">'+initials(emp.name)+'</div>'+
+      '<div class="emp-meta"><div class="emp-name">'+esc(emp.name)+'</div><div class="emp-role">'+esc(emp.role_title||"")+'</div></div>'+
+      (emp.is_boss?'<span class="emp-badge">Рук.</span>':'')+'</div>';
+    if(next){ const u=urgency(next); html+='<div class="emp-nextdl'+(u==="red"?" urgent":"")+'"><span>Ближайший: '+fmtDL(next.deadline)+'</span><span>'+fmtLeft(next)+'</span></div>'; }
+    else html+='<div class="emp-nextdl empty">Активных задач нет</div>';
+    if(mine.length===0) html+='<div class="emp-empty">Задач не назначено</div>';
+    else{ html+='<ul class="emp-tasks">'; mine.forEach(t=>{ const u=urgency(t);
+      html+='<li class="emp-task t-'+t.status+(u?" "+(u==="red"?"urgent":"amber"):"")+'" data-id="'+t.id+'"><div class="et-title">'+esc(t.title)+'</div>'+
+        '<div class="et-foot">'+statusPill(t.status)+'<span style="display:flex;align-items:center;gap:7px">'+commentBadge(t.id)+'<span class="et-dl'+(u==="red"?" urgent":"")+'">'+fmtDL(t.deadline)+'</span></span></div></li>'; });
+      html+='</ul>'; }
+    card.innerHTML=html; grid.appendChild(card);
+  });
+  grid.querySelectorAll(".emp-task").forEach(el=>el.addEventListener("click",()=>openModal(el.dataset.id)));
+}
+
+/* ---- 2. Канбан ---- */
+let kanDragId=null;
+function miniAv(id){ const e=PROF[id]; if(!e) return ''; return '<span class="mini-av" style="background:'+(e.color||"#6366f1")+'" title="'+esc(e.name)+'">'+initials(e.name)+'</span>'; }
+function commentBadge(taskId){
+  const m=commentsMeta[taskId]; if(!m||!m.count) return '';
+  const unread=unreadCount(taskId)>0;
+  return '<span class="cbadge'+(unread?" un":"")+'" title="комментарии">💬 '+m.count+(unread?'<span class="cbadge-dot"></span>':'')+'</span>';
+}
+function renderKanban(){
+  const board=document.getElementById("kanban"); board.innerHTML="";
+  STATUSES.forEach(st=>{
+    const col=document.createElement("div"); col.className="kan-col"; col.dataset.status=st.id;
+    const list=tasks.filter(t=>t.status===st.id).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
+    let html='<h3><span class="dot" style="background:'+st.color+'"></span>'+st.label+'<span class="cnt">'+list.length+'</span></h3><div class="kan-list">';
+    list.forEach(t=>{ const u=urgency(t);
+      html+='<div class="kan-card'+(u?" "+(u==="red"?"urgent":"amber"):"")+'" draggable="true" data-id="'+t.id+'"><div class="kc-title">'+esc(t.title)+'</div>'+
+        '<div class="kc-foot"><span>'+t.assignees.map(miniAv).join("")+'</span><span style="margin-left:auto;display:flex;align-items:center;gap:6px">'+commentBadge(t.id)+'<span class="kc-dl'+(u==="red"?" urgent":"")+'">'+fmtDL(t.deadline)+'</span></span></div></div>'; });
+    html+='</div>'; col.innerHTML=html; board.appendChild(col);
+  });
+  board.querySelectorAll(".kan-card").forEach(c=>{
+    c.addEventListener("click",()=>{ if(!c.classList.contains("dragging")) openModal(c.dataset.id); });
+    c.addEventListener("dragstart",e=>{ kanDragId=c.dataset.id; c.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; });
+    c.addEventListener("dragend",()=>{ c.classList.remove("dragging"); document.querySelectorAll(".kan-col.drag-over").forEach(x=>x.classList.remove("drag-over")); kanDragId=null; });
+  });
+  board.querySelectorAll(".kan-col").forEach(col=>{
+    col.addEventListener("dragover",e=>{ if(!kanDragId)return; e.preventDefault(); col.classList.add("drag-over"); });
+    col.addEventListener("dragleave",e=>{ if(!col.contains(e.relatedTarget)) col.classList.remove("drag-over"); });
+    col.addEventListener("drop",async e=>{
+      if(!kanDragId)return; e.preventDefault(); col.classList.remove("drag-over");
+      const t=tasks.find(x=>x.id===kanDragId); const ns=col.dataset.status;
+      if(t && t.status!==ns){ await updateTask(t.id,{status:ns}); }
+    });
+  });
+}
+
+/* ---- 3&4. Гантт ---- */
+const ganttState={ dept:{scale:"week",anchor:new Date()}, emp:{scale:"week",anchor:new Date(),empIds:[]} };
+const SCALES=[{id:"day",label:"День"},{id:"week",label:"Неделя"},{id:"month",label:"Месяц"},{id:"year",label:"Год"}];
+function startOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x;}
+function buildColumns(scale,anchor){
+  const cols=[];let title="";const a=new Date(anchor),now=new Date();
+  if(scale==="day"){ const base=startOfDay(a);
+    for(let h=0;h<24;h+=2){const s=new Date(base);s.setHours(h);const e=new Date(base);e.setHours(h+2);cols.push({start:s,end:e,label:String(h).padStart(2,"0")+":00",isToday:now>=s&&now<e});}
+    title=base.toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"});
+  }else if(scale==="week"){ const base=startOfDay(a);const dow=(base.getDay()+6)%7;base.setDate(base.getDate()-dow);const names=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+    for(let i=0;i<7;i++){const s=new Date(base);s.setDate(base.getDate()+i);const e=new Date(s);e.setDate(s.getDate()+1);cols.push({start:s,end:e,label:names[i]+" "+s.getDate(),isToday:startOfDay(now).getTime()===s.getTime()});}
+    const last=cols[6].start;title=base.getDate()+"–"+last.getDate()+" "+last.toLocaleDateString("ru-RU",{month:"long"});
+  }else if(scale==="month"){ const y=a.getFullYear(),m=a.getMonth(),days=new Date(y,m+1,0).getDate();
+    for(let d=1;d<=days;d++){const s=new Date(y,m,d),e=new Date(y,m,d+1);cols.push({start:s,end:e,label:String(d),isToday:startOfDay(now).getTime()===s.getTime()});}
+    title=new Date(y,m,1).toLocaleDateString("ru-RU",{month:"long",year:"numeric"});
+  }else{ const y=a.getFullYear(),names=["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
+    for(let m=0;m<12;m++){const s=new Date(y,m,1),e=new Date(y,m+1,1);cols.push({start:s,end:e,label:names[m],isToday:now>=s&&now<e});}
+    title=String(y);
+  }
+  return {cols,title};
+}
+function shiftAnchor(scale,anchor,dir){const a=new Date(anchor);
+  if(scale==="day")a.setDate(a.getDate()+dir);else if(scale==="week")a.setDate(a.getDate()+7*dir);else if(scale==="month")a.setMonth(a.getMonth()+dir);else a.setFullYear(a.getFullYear()+dir);return a;}
+function renderGantt(which){
+  const gs=ganttState[which];const {cols,title}=buildColumns(gs.scale,gs.anchor);
+  document.getElementById((which==="dept"?"dept":"emp")+"-period").textContent=title;
+  let rows;
+  if(which==="dept") rows=visibleEmployees();
+  else rows=gs.empIds.map(id=>PROF[id]).filter(Boolean);
+  if(which==="emp"&&rows.length===0){ document.getElementById("gantt-emp").innerHTML='<div class="gantt-empty">Выберите хотя бы одного сотрудника выше.</div>'; document.getElementById("legend-emp").innerHTML=""; return; }
+  let html='<table class="gantt"><thead><tr><th class="row-label">Сотрудник</th>';
+  cols.forEach(c=>html+='<th'+(c.isToday?' class="today-col"':'')+'>'+c.label+'</th>'); html+='</tr></thead><tbody>';
+  let any=false;
+  rows.forEach(emp=>{ html+='<tr><td class="row-label">'+esc(emp.name)+'<span class="rl-role">'+esc(emp.role_title||"")+'</span></td>';
+    const et=tasks.filter(t=>t.assignees.includes(emp.id));
+    cols.forEach(c=>{
+      const ct=et.filter(t=>{
+        const dl=new Date(t.deadline).getTime();
+        const st=t.start_at?new Date(t.start_at).getTime():dl;
+        // задача попадает в ячейку, если интервал [start..deadline] пересекает [cell.start..cell.end)
+        return st < c.end.getTime() && dl >= c.start.getTime();
+      });
+      if(ct.length)any=true; html+='<td class="cell'+(c.isToday?' today-col':'')+'">';
+      ct.sort((a,b)=>new Date(a.deadline)-new Date(b.deadline)).forEach(t=>{const u=urgency(t);
+        const dl=new Date(t.deadline).getTime();
+        const isEnd = dl>=c.start.getTime() && dl<c.end.getTime(); // ячейка, где находится дедлайн
+        const tip=esc(t.title)+(t.start_at?(" — "+fmtDL(t.start_at)+" → "+fmtDL(t.deadline)):(" — "+fmtDL(t.deadline)));
+        html+='<div class="bar b-'+t.status+(u==="red"?" urgent":"")+(t.start_at&&!isEnd?" span":"")+'" data-id="'+t.id+'" title="'+tip+'">'+(isEnd?esc(t.title):"·")+'</div>';});
+      html+='</td>'; });
+    html+='</tr>'; });
+  html+='</tbody></table>';
+  const wrap=document.getElementById("gantt-"+which); wrap.innerHTML=html+(any?"":'<div class="gantt-empty">В этом периоде задач с дедлайном нет.</div>');
+  wrap.querySelectorAll(".bar").forEach(b=>b.addEventListener("click",()=>openModal(b.dataset.id)));
+  document.getElementById("legend-"+which).innerHTML=STATUSES.map(s=>'<span><span class="sw" style="background:'+s.color+'"></span>'+s.label+'</span>').join("")+
+    '<span><span class="sw" style="background:#fff;outline:2px solid var(--urgent)"></span>&lt; 1 ч</span>';
+}
+function buildSeg(containerId,which){const c=document.getElementById(containerId);c.innerHTML="";
+  SCALES.forEach(s=>{const b=document.createElement("button");b.textContent=s.label;if(ganttState[which].scale===s.id)b.classList.add("active");
+    b.addEventListener("click",()=>{ganttState[which].scale=s.id;buildSeg(containerId,which);renderGantt(which);});c.appendChild(b);});}
+document.getElementById("dept-prev").addEventListener("click",()=>{ganttState.dept.anchor=shiftAnchor(ganttState.dept.scale,ganttState.dept.anchor,-1);renderGantt("dept");});
+document.getElementById("dept-next").addEventListener("click",()=>{ganttState.dept.anchor=shiftAnchor(ganttState.dept.scale,ganttState.dept.anchor,1);renderGantt("dept");});
+document.getElementById("emp-prev").addEventListener("click",()=>{ganttState.emp.anchor=shiftAnchor(ganttState.emp.scale,ganttState.emp.anchor,-1);renderGantt("emp");});
+document.getElementById("emp-next").addEventListener("click",()=>{ganttState.emp.anchor=shiftAnchor(ganttState.emp.scale,ganttState.emp.anchor,1);renderGantt("emp");});
+function renderEmpMulti(){
+  const box=document.getElementById("emp-multi");box.innerHTML="";
+  const pool=visibleEmployees();
+  ganttState.emp.empIds=ganttState.emp.empIds.filter(id=>PROF[id]&&pool.some(p=>p.id===id));
+  if(ganttState.emp.empIds.length===0&&pool.length) ganttState.emp.empIds=[pool[0].id];
+  pool.forEach(e=>{const sel=ganttState.emp.empIds.includes(e.id);const t=document.createElement("div");
+    t.className="emp-toggle"+(sel?" sel":"");t.innerHTML='<span class="mini-av" style="background:'+(e.color||"#6366f1")+'">'+initials(e.name)+'</span>'+nameWithRole(e);
+    t.addEventListener("click",()=>{const i=ganttState.emp.empIds.indexOf(e.id);if(i>=0)ganttState.emp.empIds.splice(i,1);else ganttState.emp.empIds.push(e.id);renderEmpMulti();renderGantt("emp");});
+    box.appendChild(t);});
+}
+
+/* ====== МОДАЛКА ЗАДАЧИ ====== */
+let editingId=null;
+const modalBg=document.getElementById("modal-bg");
+function buildAssigneeChips(){
+  const box=document.getElementById("f-assignees");box.innerHTML="";
+  profiles.forEach(e=>{const chip=document.createElement("div");chip.className="assignee-chip";chip.dataset.id=e.id;
+    chip.innerHTML='<span class="mini-av" style="background:'+(e.color||"#6366f1")+'">'+initials(e.name)+'</span>'+
+      '<span class="ac-text"><span class="ac-name">'+esc(e.name)+'</span>'+(e.role_title?'<span class="ac-role">'+esc(e.role_title)+'</span>':'')+'</span>';
+    chip.addEventListener("click",()=>{ if(chip.classList.contains("disabled"))return; chip.classList.toggle("sel"); });
+    box.appendChild(chip);});
+}
+function toLocalInput(iso){const d=iso?new Date(iso):new Date(Date.now()+24*3600*1000);const off=d.getTimezoneOffset();return new Date(d.getTime()-off*60000).toISOString().slice(0,16);}
+function openModal(id){
+  editingId=id||null;
+  const t=id?tasks.find(x=>x.id===id):null;
+  const boss=isBoss();
+  // сотрудник может открывать только свои задачи (видит лишь их и так), и менять только статус
+  const canEditAll=boss;
+  document.querySelectorAll(".field-err").forEach(e=>e.classList.remove("show"));
+  document.getElementById("modal-title").textContent=id?(canEditAll?"Редактировать задачу":"Задача"):"Новая задача";
+  document.getElementById("ro-note").classList.toggle("hidden",canEditAll);
+  document.getElementById("btn-delete").style.display=(id&&boss)?"block":"none";
+  document.getElementById("f-title").value=t?t.title:"";
+  document.getElementById("f-desc").value=t?(t.descr||""):"";
+  document.getElementById("f-status").value=t?t.status:"new";
+  document.getElementById("f-deadline").value=toLocalInput(t?t.deadline:null);
+  document.getElementById("f-start").value=(t&&t.start_at)?toLocalInput(t.start_at):"";
+  buildAssigneeChips();
+  document.querySelectorAll(".assignee-chip").forEach(ch=>{ ch.classList.toggle("sel",t?t.assignees.includes(ch.dataset.id):false); ch.classList.toggle("disabled",!canEditAll); });
+  // блокируем поля для сотрудника
+  ["f-title","f-desc","f-deadline","f-start"].forEach(fid=>document.getElementById(fid).disabled=!canEditAll);
+  modalBg.classList.add("show");
+  // вложения: для новой задачи — очередь, для существующей — список из базы
+  curAttachments=[]; pendingFiles=[];
+  renderAttachments();
+  // комментарии
+  curComments=[];
+  renderComments();
+  if(id){
+    loadAttachments(id).then(renderAttachments);
+    loadComments(id).then(()=>{ renderComments(); markRead(id).then(()=>renderReminders()); });
+  }
+  setTimeout(()=>{ (canEditAll?document.getElementById("f-title"):document.getElementById("f-status")).focus(); },50);
+}
+function closeModal(){ modalBg.classList.remove("show"); editingId=null; }
+document.getElementById("btn-add").addEventListener("click",()=>{ if(!isBoss()){flash("Создавать задачи может только руководитель",true);return;} openModal(null); });
+document.getElementById("btn-cancel").addEventListener("click",closeModal);
+modalBg.addEventListener("click",e=>{if(e.target===modalBg)closeModal();});
+
+async function insertTask(payload){
+  const {data,error}=await sb.from("tasks").insert(payload).select("id").single();
+  if(error){ console.error(error); flash("Не удалось создать: "+error.message,true); return null; }
+  return data.id;
+}
+async function updateTask(id,patch){
+  const {error}=await sb.from("tasks").update(patch).eq("id",id);
+  if(error){ console.error(error); flash("Не удалось сохранить: "+error.message,true); return false; }
+  await refreshData(); flash("Сохранено"); return true;
+}
+document.getElementById("btn-save").addEventListener("click",async()=>{
+  const boss=isBoss();
+  const status=document.getElementById("f-status").value;
+  if(editingId && !boss){ // сотрудник меняет только статус
+    await updateTask(editingId,{status}); closeModal(); return;
+  }
+  const title=document.getElementById("f-title").value.trim();
+  const descr=document.getElementById("f-desc").value.trim();
+  const dlRaw=document.getElementById("f-deadline").value;
+  const startRaw=document.getElementById("f-start").value;
+  const assignees=[...document.querySelectorAll(".assignee-chip.sel")].map(c=>c.dataset.id);
+  let ok=true; const showErr=(id,c)=>{document.getElementById(id).classList.toggle("show",c);if(c)ok=false;};
+  showErr("err-title",!title); showErr("err-assignees",assignees.length===0); showErr("err-deadline",!dlRaw);
+  if(!ok)return;
+  const deadline=new Date(dlRaw).toISOString();
+  const start_at=startRaw?new Date(startRaw).toISOString():null;
+  if(editingId){ const done=await updateTask(editingId,{title,descr,status,deadline,start_at,assignees}); if(done)closeModal(); }
+  else{
+    const newId=await insertTask({title,descr,status,deadline,start_at,assignees,created_by:me.id});
+    if(newId){
+      if(pendingFiles.length){ editingId=newId; await uploadFiles(pendingFiles); pendingFiles=[]; }
+      await refreshData(); flash("Задача создана"); closeModal();
+    }
+  }
+});
+document.getElementById("btn-delete").addEventListener("click",async()=>{
+  if(!editingId||!isBoss())return; const t=tasks.find(x=>x.id===editingId);
+  if(!confirm("Удалить задачу?\n\n"+t.title))return;
+  const {error}=await sb.from("tasks").delete().eq("id",editingId);
+  if(error){ flash("Не удалось удалить: "+error.message,true); return; }
+  await deleteTaskFiles(editingId);
+  await refreshData(); flash("Удалено"); closeModal();
+});
+
+/* ====== ВЛОЖЕНИЯ ====== */
+const BUCKET="task-files";
+let curAttachments=[]; // вложения текущей открытой задачи
+let pendingFiles=[];   // файлы, выбранные для ещё не сохранённой задачи
+
+function fmtSize(b){ if(b==null)return""; if(b<1024)return b+" Б"; if(b<1048576)return (b/1024).toFixed(0)+" КБ"; return (b/1048576).toFixed(1)+" МБ"; }
+function fileIcon(name){ const e=(name.split(".").pop()||"").toLowerCase();
+  if(["jpg","jpeg","png","gif","webp","bmp","svg"].includes(e))return"🖼️";
+  if(["pdf"].includes(e))return"📕";
+  if(["doc","docx","odt","rtf"].includes(e))return"📘";
+  if(["xls","xlsx","csv"].includes(e))return"📗";
+  if(["ppt","pptx"].includes(e))return"📙";
+  if(["zip","rar","7z","tar","gz"].includes(e))return"🗜️";
+  return"📄"; }
+
+async function loadAttachments(taskId){
+  if(!taskId){ curAttachments=[]; return; }
+  const {data,error}=await sb.from("attachments").select("*").eq("task_id",taskId).order("created_at",{ascending:true});
+  if(error){ console.error(error); curAttachments=[]; return; }
+  curAttachments=data||[];
+}
+function renderAttachments(){
+  const box=document.getElementById("att-list");
+  // НОВАЯ задача — показываем выбранные, но ещё не загруженные файлы (очередь)
+  if(!editingId){
+    if(pendingFiles.length===0){ box.innerHTML='<div class="att-empty">Файлов пока нет. Можно прикрепить — они загрузятся при сохранении задачи.</div>'; return; }
+    box.innerHTML="";
+    pendingFiles.forEach((f,idx)=>{
+      const row=document.createElement("div"); row.className="att-item";
+      row.innerHTML='<span class="att-ico">'+fileIcon(f.name)+'</span>'+
+        '<span class="att-name" style="cursor:default">'+esc(f.name)+'</span>'+
+        '<span class="att-size">'+fmtSize(f.size)+'</span>'+
+        '<button class="att-del" title="Убрать" data-idx="'+idx+'">×</button>';
+      box.appendChild(row);
+    });
+    box.querySelectorAll(".att-del").forEach(el=>el.addEventListener("click",()=>{ pendingFiles.splice(+el.dataset.idx,1); renderAttachments(); }));
+    return;
+  }
+  if(curAttachments.length===0){ box.innerHTML='<div class="att-empty">Файлов пока нет</div>'; return; }
+  box.innerHTML="";
+  curAttachments.forEach(a=>{
+    const canDel=isBoss()||a.uploaded_by===me.id;
+    const row=document.createElement("div"); row.className="att-item";
+    row.innerHTML='<span class="att-ico">'+fileIcon(a.filename)+'</span>'+
+      '<a class="att-name" data-path="'+esc(a.path)+'">'+esc(a.filename)+'</a>'+
+      '<span class="att-size">'+fmtSize(a.size)+'</span>'+
+      (canDel?'<button class="att-del" title="Удалить" data-id="'+a.id+'" data-path="'+esc(a.path)+'">×</button>':'');
+    box.appendChild(row);
+  });
+  box.querySelectorAll(".att-name").forEach(el=>el.addEventListener("click",()=>downloadFile(el.dataset.path,el.textContent)));
+  box.querySelectorAll(".att-del").forEach(el=>el.addEventListener("click",()=>deleteAttachment(el.dataset.id,el.dataset.path)));
+}
+async function downloadFile(path,filename){
+  const {data,error}=await sb.storage.from(BUCKET).createSignedUrl(path,60);
+  if(error){ flash("Не удалось открыть файл: "+error.message,true); return; }
+  const a=document.createElement("a"); a.href=data.signedUrl; a.target="_blank"; a.rel="noopener"; a.download=filename||""; a.click();
+}
+async function uploadFiles(fileList){
+  if(!editingId){ flash("Сначала сохраните задачу, затем прикрепляйте файлы",true); return; }
+  const MAX=25*1024*1024;
+  for(const file of fileList){
+    if(file.size>MAX){ flash('Файл «'+file.name+'» больше 25 МБ',true); continue; }
+    const safe=file.name.replace(/[^\w.\-]+/g,"_");
+    const path=editingId+"/"+Date.now()+"_"+Math.random().toString(36).slice(2,7)+"_"+safe;
+    const {error:upErr}=await sb.storage.from(BUCKET).upload(path,file,{upsert:false});
+    if(upErr){ flash('Ошибка загрузки «'+file.name+'»: '+upErr.message,true); continue; }
+    const {error:insErr}=await sb.from("attachments").insert({task_id:editingId,path,filename:file.name,size:file.size,uploaded_by:me.id});
+    if(insErr){ flash("Файл загружен, но не записан: "+insErr.message,true); await sb.storage.from(BUCKET).remove([path]); continue; }
+  }
+  await loadAttachments(editingId); renderAttachments(); flash("Файлы добавлены");
+}
+async function deleteAttachment(id,path){
+  if(!confirm("Удалить файл?"))return;
+  const {error}=await sb.from("attachments").delete().eq("id",id);
+  if(error){ flash("Не удалось удалить: "+error.message,true); return; }
+  await sb.storage.from(BUCKET).remove([path]); // чистим сам файл
+  await loadAttachments(editingId); renderAttachments(); flash("Файл удалён");
+}
+// очистка всех файлов задачи (при удалении задачи). Записи уходят каскадом, файлы — вручную тут.
+async function deleteTaskFiles(taskId){
+  const {data:list}=await sb.storage.from(BUCKET).list(taskId,{limit:100});
+  if(list&&list.length){ const paths=list.map(f=>taskId+"/"+f.name); await sb.storage.from(BUCKET).remove(paths); }
+}
+document.getElementById("att-pick").addEventListener("click",()=>document.getElementById("att-input").click());
+document.getElementById("att-input").addEventListener("change",async e=>{
+  const fs=[...e.target.files]; e.target.value=""; if(!fs.length)return;
+  const MAX=25*1024*1024;
+  if(editingId){ await uploadFiles(fs); }
+  else{ // копим до сохранения задачи
+    fs.forEach(f=>{ if(f.size>MAX){ flash('Файл «'+f.name+'» больше 25 МБ',true); } else pendingFiles.push(f); });
+    renderAttachments();
+  }
+});
+
+/* ====== КОММЕНТАРИИ ====== */
+let curComments=[];
+async function loadComments(taskId){
+  curComments=[];
+  if(!taskId) return;
+  const {data,error}=await sb.from("comments").select("*").eq("task_id",taskId).order("created_at",{ascending:true});
+  if(error){ console.error(error); return; }
+  curComments=data||[];
+}
+function fmtCommentTime(iso){
+  const d=new Date(iso),now=new Date();
+  const t=d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+  if(d.toDateString()===now.toDateString()) return "сегодня "+t;
+  return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+" "+t;
+}
+function renderComments(){
+  const box=document.getElementById("com-list");
+  const cnt=document.getElementById("com-count");
+  cnt.textContent=curComments.length?curComments.length:"";
+  cnt.style.display=curComments.length?"":"none";
+  if(!editingId){ box.innerHTML='<div class="com-empty">Комментарии можно оставлять после создания задачи.</div>'; return; }
+  if(curComments.length===0){ box.innerHTML='<div class="com-empty">Пока нет комментариев</div>'; return; }
+  const lastRead=readsMap[editingId]||null;
+  box.innerHTML="";
+  curComments.forEach(c=>{
+    const a=PROF[c.author_id];
+    const isNew=lastRead?(c.created_at>lastRead):true;
+    const canDel=isBoss()||c.author_id===me.id;
+    const row=document.createElement("div"); row.className="com-item"+(isNew&&c.author_id!==me.id?" unread":"");
+    row.innerHTML='<div class="com-head">'+
+      '<span class="mini-av" style="background:'+(a?a.color:"#6366f1")+'">'+initials(a?a.name:"?")+'</span>'+
+      '<span class="com-author">'+esc(a?a.name:"Неизвестный")+'</span>'+
+      (isNew&&c.author_id!==me.id?'<span class="com-new-dot" title="новый"></span>':'')+
+      '<span class="com-time">'+fmtCommentTime(c.created_at)+'</span>'+
+      (canDel?'<button class="com-del" data-id="'+c.id+'" title="Удалить">×</button>':'')+
+      '</div><div class="com-body">'+esc(c.body)+'</div>';
+    box.appendChild(row);
+  });
+  box.querySelectorAll(".com-del").forEach(el=>el.addEventListener("click",()=>deleteComment(el.dataset.id)));
+  box.scrollTop=box.scrollHeight;
+}
+async function sendComment(){
+  if(!editingId){ flash("Сначала сохраните задачу",true); return; }
+  const ta=document.getElementById("com-input");
+  const body=ta.value.trim();
+  if(!body) return;
+  const {error}=await sb.from("comments").insert({task_id:editingId,author_id:me.id,body});
+  if(error){ flash("Не удалось отправить: "+error.message,true); return; }
+  ta.value="";
+  await loadComments(editingId); renderComments();
+  await markRead(editingId);
+  await loadCommentsMeta(); renderReminders();
+}
+async function deleteComment(id){
+  if(!confirm("Удалить комментарий?")) return;
+  const {error}=await sb.from("comments").delete().eq("id",id);
+  if(error){ flash("Не удалось удалить: "+error.message,true); return; }
+  await loadComments(editingId); renderComments();
+  await loadCommentsMeta(); renderReminders();
+}
+document.getElementById("com-send").addEventListener("click",sendComment);
+document.getElementById("com-input").addEventListener("keydown",e=>{ if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); sendComment(); } });
+
+/* ====== КОМАНДА ====== */
+const teamBg=document.getElementById("team-bg");
+function renderTeam(){
+  const list=document.getElementById("team-list");
+  if(!isBoss()){ list.innerHTML='<div class="emp-empty">Доступно только руководителю.</div>'; return; }
+  list.classList.remove("loading"); list.innerHTML="";
+  profiles.forEach(e=>{
+    const row=document.createElement("div"); row.className="team-row";
+    row.style.cssText="display:flex;align-items:center;gap:10px;padding:9px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fafbff";
+    row.innerHTML='<span class="mini-av" style="width:30px;height:30px;border-radius:8px;font-size:12px;background:'+(e.color||"#6366f1")+'">'+initials(e.name)+'</span>'+
+      '<input class="tname" value="'+esc(e.name)+'" style="flex:1;border:1px solid var(--border);border-radius:7px;padding:6px 9px;font-size:13.5px;font-family:inherit;color:var(--text);outline:none">'+
+      '<input class="trole" value="'+esc(e.role_title||"")+'" style="width:130px;border:1px solid var(--border);border-radius:7px;padding:6px 9px;font-size:12.5px;font-family:inherit;color:var(--muted);outline:none">'+
+      (e.is_boss?'<span style="font-size:10px;font-weight:700;color:var(--ink-soft);background:#eef0ff;padding:2px 7px;border-radius:20px">Рук.</span>':'');
+    const nameI=row.querySelector(".tname"),roleI=row.querySelector(".trole");
+    const saveRow=async()=>{ const patch={name:nameI.value.trim()||e.name,role_title:roleI.value};
+      const {error}=await sb.from("profiles").update(patch).eq("id",e.id);
+      if(error){flash("Не удалось сохранить профиль: "+error.message,true);return;}
+      e.name=patch.name;e.role_title=patch.role_title;row.querySelector(".mini-av").textContent=initials(e.name);flash("Сохранено"); };
+    nameI.addEventListener("blur",saveRow); roleI.addEventListener("blur",saveRow);
+    list.appendChild(row);
+  });
+}
+document.getElementById("btn-team").addEventListener("click",()=>{ renderTeam(); teamBg.classList.add("show"); });
+document.getElementById("team-close").addEventListener("click",async()=>{ teamBg.classList.remove("show"); await refreshData(); });
+teamBg.addEventListener("click",e=>{if(e.target===teamBg){teamBg.classList.remove("show");refreshData();}});
+document.addEventListener("keydown",e=>{ if(e.key!=="Escape")return;
+  if(modalBg.classList.contains("show"))closeModal();
+  else if(teamBg.classList.contains("show")){teamBg.classList.remove("show");refreshData();}
+  else if(protoBg.classList.contains("show")) closeProto();
+});
+
+/* ====== РАСПОЗНАВАНИЕ ПРОТОКОЛА ====== */
+const protoBg=document.getElementById("proto-bg");
+let protoTasks=[]; // предложенные задачи [{title,descr,assignee_ids,deadline,on}]
+function openProto(){
+  if(!isBoss()){ flash("Доступно только руководителю",true); return; }
+  document.getElementById("proto-text").value="";
+  document.getElementById("proto-err").classList.remove("show");
+  document.getElementById("proto-file-status").textContent="";
+  document.getElementById("proto-ocr-btn").classList.add("hidden");
+  lastScanFile=null;
+  showProtoStep(1);
+  protoBg.classList.add("show");
+  setTimeout(()=>document.getElementById("proto-text").focus(),50);
+}
+function closeProto(){ protoBg.classList.remove("show"); protoTasks=[]; }
+function showProtoStep(n){
+  document.getElementById("proto-step1").classList.toggle("hidden",n!==1);
+  document.getElementById("proto-step2").classList.toggle("hidden",n!==2);
+  document.getElementById("proto-loading").classList.toggle("hidden",n!==0);
+}
+document.getElementById("btn-protocol").addEventListener("click",openProto);
+document.getElementById("proto-cancel").addEventListener("click",closeProto);
+
+/* ---- Чтение файла протокола (txt / docx / pdf / фото) + OCR ---- */
+let lastScanFile=null; // файл, который можно прогнать через OCR (pdf-скан или картинка)
+const IMG_EXT=["png","jpg","jpeg","webp","bmp"];
+function showOcrBtn(show){ document.getElementById("proto-ocr-btn").classList.toggle("hidden",!show); }
+
+document.getElementById("proto-file-pick").addEventListener("click",()=>document.getElementById("proto-file").click());
+document.getElementById("proto-file").addEventListener("change",async e=>{
+  const file=e.target.files[0]; e.target.value=""; if(!file)return;
+  await processProtoFile(file);
+});
+
+async function processProtoFile(file){
+  const status=document.getElementById("proto-file-status");
+  const ext=(file.name.split(".").pop()||"").toLowerCase();
+  lastScanFile=null; showOcrBtn(false);
+  status.textContent="Читаю файл…";
+  try{
+    let text="";
+    if(ext==="txt"){
+      text=(await file.text()).trim();
+    }else if(ext==="docx"){
+      const buf=await file.arrayBuffer();
+      const res=await window.mammoth.extractRawText({arrayBuffer:buf});
+      text=(res.value||"").trim();
+    }else if(ext==="pdf"){
+      const buf=await file.arrayBuffer();
+      const pdfjs=window.pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      const pdf=await pdfjs.getDocument({data:buf.slice(0)}).promise;
+      const parts=[];
+      for(let p=1;p<=pdf.numPages;p++){
+        const page=await pdf.getPage(p);
+        const content=await page.getTextContent();
+        parts.push(content.items.map(i=>i.str).join(" "));
+      }
+      text=parts.join("\n").trim();
+      if(!text){ lastScanFile=file; showOcrBtn(true);
+        status.textContent="В PDF нет текстового слоя — похоже на скан. Нажмите «Распознать как скан (OCR)».";
+        return;
+      }
+    }else if(IMG_EXT.includes(ext)){
+      lastScanFile=file; showOcrBtn(true);
+      status.textContent="Изображение загружено. Нажмите «Распознать как скан (OCR)».";
+      return;
+    }else{
+      status.textContent="Формат не поддерживается: ."+ext; return;
+    }
+    if(!text){ status.textContent="Не удалось извлечь текст из файла."; return; }
+    appendProtoText(text);
+    status.textContent="Загружено: "+file.name+" ("+text.length+" символов)";
+  }catch(err){
+    console.error(err);
+    status.textContent="Ошибка чтения файла: "+err.message;
+  }
+}
+
+function appendProtoText(text){
+  const ta=document.getElementById("proto-text");
+  ta.value = ta.value.trim() ? (ta.value.trim()+"\n\n"+text) : text;
+}
+
+// ── Перетаскивание файла в окно протокола ──
+(function(){
+  const dropZone=document.getElementById("proto-step1");
+  if(!dropZone) return;
+  ["dragenter","dragover"].forEach(ev=>dropZone.addEventListener(ev,e=>{
+    e.preventDefault(); e.stopPropagation(); dropZone.classList.add("proto-drag");
+  }));
+  ["dragleave","drop"].forEach(ev=>dropZone.addEventListener(ev,e=>{
+    e.preventDefault(); e.stopPropagation();
+    if(ev==="dragleave" && dropZone.contains(e.relatedTarget)) return;
+    dropZone.classList.remove("proto-drag");
+  }));
+  dropZone.addEventListener("drop",async e=>{
+    const files=[...(e.dataTransfer?.files||[])];
+    if(!files.length) return;
+    for(const f of files){ await processProtoFile(f); } // несколько файлов — по очереди
+  });
+})();
+
+// OCR: рендерим страницы/картинку и распознаём через Tesseract (рус+англ)
+document.getElementById("proto-ocr-btn").addEventListener("click",async()=>{
+  if(!lastScanFile){ return; }
+  const status=document.getElementById("proto-file-status");
+  const btn=document.getElementById("proto-ocr-btn");
+  btn.disabled=true;
+  const ext=(lastScanFile.name.split(".").pop()||"").toLowerCase();
+  try{
+    const images=[]; // dataURL картинок для распознавания
+    if(ext==="pdf"){
+      const buf=await lastScanFile.arrayBuffer();
+      const pdfjs=window.pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      const pdf=await pdfjs.getDocument({data:buf}).promise;
+      for(let p=1;p<=pdf.numPages;p++){
+        status.textContent="Готовлю страницу "+p+" из "+pdf.numPages+"…";
+        const page=await pdf.getPage(p);
+        const viewport=page.getViewport({scale:2});
+        const canvas=document.createElement("canvas");
+        canvas.width=viewport.width; canvas.height=viewport.height;
+        await page.render({canvasContext:canvas.getContext("2d"),viewport}).promise;
+        images.push(canvas.toDataURL("image/png"));
+      }
+    }else{
+      images.push(URL.createObjectURL(lastScanFile));
+    }
+    status.textContent="Распознаю текст (это может занять время)…";
+    const worker=await window.Tesseract.createWorker("rus+eng",1,{
+      logger:m=>{ if(m.status==="recognizing text"){ status.textContent="Распознаю… "+Math.round(m.progress*100)+"%"; } }
+    });
+    let all="";
+    for(let i=0;i<images.length;i++){
+      if(images.length>1) status.textContent="Страница "+(i+1)+" из "+images.length+"…";
+      const {data}=await worker.recognize(images[i]);
+      all += (data.text||"")+"\n";
+    }
+    await worker.terminate();
+    all=all.trim();
+    if(!all){ status.textContent="OCR не нашёл текста. Возможно, скан слишком нечёткий."; }
+    else{ appendProtoText(all); status.textContent="Распознано символов: "+all.length+". Проверьте текст и нажмите «Распознать»."; showOcrBtn(false); lastScanFile=null; }
+  }catch(err){
+    console.error(err);
+    status.textContent="Ошибка OCR: "+err.message;
+  }finally{
+    btn.disabled=false;
+  }
+});
+
+document.getElementById("proto-back").addEventListener("click",()=>showProtoStep(1));
+protoBg.addEventListener("click",e=>{ if(e.target===protoBg) closeProto(); });
+
+document.getElementById("proto-analyze").addEventListener("click",async()=>{
+  const text=document.getElementById("proto-text").value.trim();
+  const err=document.getElementById("proto-err"); err.classList.remove("show");
+  if(text.length<10){ err.textContent="Вставьте текст протокола (хотя бы пару предложений)"; err.classList.add("show"); return; }
+  showProtoStep(0);
+  try{
+    const empPayload=profiles.map(p=>({id:p.id,name:p.name,role:p.role_title||""}));
+    const {data,error}=await sb.functions.invoke("parse-protocol",{ body:{ protocol:text, employees:empPayload } });
+    if(error){ throw new Error(error.message||"Ошибка вызова функции"); }
+    if(data && data.error){ throw new Error(data.error + (data.raw?("\n\n"+data.raw.slice(0,300)):"")); }
+    const list=(data && Array.isArray(data.tasks))?data.tasks:[];
+    if(list.length===0){ err.textContent="ИИ не нашёл задач в тексте. Попробуйте переформулировать."; err.classList.add("show"); showProtoStep(1); return; }
+    protoTasks=list.map(t=>({
+      title:t.title||"Без названия",
+      descr:t.descr||"",
+      assignee_ids:Array.isArray(t.assignee_ids)?t.assignee_ids.filter(id=>PROF[id]):[],
+      deadline:t.deadline||new Date(Date.now()+3*86400000).toISOString(),
+      on:true
+    }));
+    renderProtoResults();
+    showProtoStep(2);
+  }catch(e){
+    console.error(e);
+    err.textContent="Не удалось распознать: "+e.message; err.classList.add("show");
+    showProtoStep(1);
+  }
+});
+
+function protoLocalInput(iso){ const d=new Date(iso); const off=d.getTimezoneOffset(); return new Date(d.getTime()-off*60000).toISOString().slice(0,16); }
+function renderProtoResults(){
+  const box=document.getElementById("proto-results"); box.innerHTML="";
+  protoTasks.forEach((t,idx)=>{
+    const card=document.createElement("div"); card.className="proto-card"+(t.on?"":" off");
+    let chips='';
+    profiles.forEach(e=>{ const sel=t.assignee_ids.includes(e.id);
+      chips+='<span class="pc-chip'+(sel?" sel":"")+'" data-emp="'+e.id+'"><span class="mini-av" style="background:'+(e.color||"#6366f1")+'">'+initials(e.name)+'</span>'+esc(e.name)+'</span>'; });
+    card.innerHTML=
+      '<div class="pc-head"><input type="checkbox" '+(t.on?"checked":"")+' data-chk><input class="pc-title" value="'+esc(t.title)+'" data-title></div>'+
+      '<textarea class="pc-desc" placeholder="Описание" data-desc>'+esc(t.descr)+'</textarea>'+
+      '<div class="pc-row" style="margin-top:8px"><div><label>Исполнители</label><div class="pc-assignees">'+chips+'</div></div></div>'+
+      '<div class="pc-row"><div><label>Срок</label><input type="datetime-local" class="pc-dl" value="'+protoLocalInput(t.deadline)+'" data-dl></div></div>';
+    // обработчики
+    card.querySelector("[data-chk]").addEventListener("change",e=>{ t.on=e.target.checked; card.classList.toggle("off",!t.on); });
+    card.querySelector("[data-title]").addEventListener("input",e=>{ t.title=e.target.value; });
+    card.querySelector("[data-desc]").addEventListener("input",e=>{ t.descr=e.target.value; });
+    card.querySelector("[data-dl]").addEventListener("change",e=>{ if(e.target.value) t.deadline=new Date(e.target.value).toISOString(); });
+    card.querySelectorAll(".pc-chip").forEach(ch=>ch.addEventListener("click",()=>{
+      const id=ch.dataset.emp; const i=t.assignee_ids.indexOf(id);
+      if(i>=0) t.assignee_ids.splice(i,1); else t.assignee_ids.push(id);
+      ch.classList.toggle("sel");
+    }));
+    box.appendChild(card);
+  });
+}
+
+document.getElementById("proto-create").addEventListener("click",async()=>{
+  const chosen=protoTasks.filter(t=>t.on);
+  if(chosen.length===0){ flash("Не выбрано ни одной задачи",true); return; }
+  const bad=chosen.find(t=>!t.title.trim()||t.assignee_ids.length===0);
+  if(bad){ flash("У каждой задачи нужны название и хотя бы один исполнитель",true); return; }
+  const rows=chosen.map(t=>({ title:t.title.trim(), descr:t.descr.trim(), status:"new", deadline:t.deadline, assignees:t.assignee_ids, created_by:me.id }));
+  const {error}=await sb.from("tasks").insert(rows);
+  if(error){ flash("Ошибка создания: "+error.message,true); return; }
+  await refreshData(); flash("Создано задач: "+rows.length); closeProto();
+});
+
+/* ====== Часы ====== */
+function tick(){const now=new Date();const days=["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
+  const dd=String(now.getDate()).padStart(2,"0"),mm=String(now.getMonth()+1).padStart(2,"0");
+  document.getElementById("hdr-date").textContent=dd+"."+mm+"."+now.getFullYear()+", "+days[now.getDay()];
+  document.getElementById("hdr-clock").textContent=now.toLocaleTimeString("ru-RU");}
+function renderAll(){
+  const active=document.querySelector(".view.active").id;
+  // вкладки гантта-сотрудника недоступны без выбора — но рендер сам разрулит
+  if(active==="view-cards")renderCards();
+  else if(active==="view-kanban")renderKanban();
+  else if(active==="view-gantt-dept")renderGantt("dept");
+  else if(active==="view-gantt-emp"){renderEmpMulti();renderGantt("emp");}
+  renderReminders();
+}
+
+/* ====== ВХОД / СЕССИЯ ====== */
+async function fetchMe(){
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user)return null;
+  const {data,error}=await sb.from("profiles").select("*").eq("id",user.id).single();
+  if(error||!data){ return {id:user.id,name:user.email||"Пользователь",role_title:"",color:"#6366f1",is_boss:false,_noProfile:true}; }
+  return data;
+}
+async function enterApp(){
+  me=await fetchMe();
+  if(!me)return;
+  if(me._noProfile){ flash("Профиль не найден в базе — обратитесь к руководителю",true); }
+  document.getElementById("hdr-who").innerHTML="Вы: <b>"+esc(me.name)+"</b>"+(me.is_boss?" (руководитель)":"");
+  // сотруднику прячем кнопки руководителя
+  document.getElementById("btn-add").classList.toggle("hidden",!isBoss());
+  document.getElementById("btn-team").classList.toggle("hidden",!isBoss());
+  document.getElementById("btn-protocol").classList.toggle("hidden",!isBoss());
+  document.getElementById("login-screen").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  buildSeg("seg-dept","dept"); buildSeg("seg-emp","emp");
+  await refreshData();
+}
+async function doLogin(){
+  const email=document.getElementById("login-email").value.trim();
+  const pass=document.getElementById("login-pass").value;
+  const errEl=document.getElementById("login-err"); errEl.classList.remove("show");
+  const btn=document.getElementById("login-btn"); btn.disabled=true; btn.textContent="Вход…";
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false; btn.textContent="Войти";
+  if(error){ errEl.textContent="Неверный логин или пароль"; errEl.classList.add("show"); return; }
+  await enterApp();
+}
+document.getElementById("login-btn").addEventListener("click",doLogin);
+document.getElementById("login-pass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+document.getElementById("login-email").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("login-pass").focus();});
+document.getElementById("btn-logout").addEventListener("click",async()=>{ await sb.auth.signOut(); location.reload(); });
+
+/* ---- Забыли пароль: отправка письма со ссылкой ---- */
+document.getElementById("forgot-link").addEventListener("click",async()=>{
+  const errEl=document.getElementById("login-err"); errEl.classList.remove("show");
+  const okEl=document.getElementById("login-ok"); okEl.classList.remove("show");
+  const email=document.getElementById("login-email").value.trim();
+  if(!email){ errEl.textContent="Введите email в поле выше, затем нажмите «Забыли пароль?»"; errEl.classList.add("show"); return; }
+  const {error}=await sb.auth.resetPasswordForEmail(email,{ redirectTo: location.href.split("#")[0] });
+  if(error){ errEl.textContent="Не удалось отправить письмо: "+error.message; errEl.classList.add("show"); return; }
+  okEl.textContent="Письмо со ссылкой для сброса отправлено на "+email+". Проверьте почту (и папку «Спам»).";
+  okEl.classList.add("show");
+});
+
+/* ---- Возврат по ссылке из письма: показать форму нового пароля ---- */
+async function handleRecovery(){
+  // Supabase кладёт параметры в hash; библиотека сама создаёт временную сессию с типом recovery
+  const okEl=document.getElementById("login-ok"); const errEl=document.getElementById("login-err");
+  const card=document.querySelector(".login-card");
+  card.classList.add("reset-mode");
+  document.querySelectorAll(".reset-hide").forEach(el=>el.classList.add("reset-hide"));
+  // переоформляем карточку под ввод нового пароля
+  card.innerHTML='<h1>Новый пароль</h1><div class="sub">Введите новый пароль для входа</div>'+
+    '<label>Новый пароль</label><input type="password" id="np1" placeholder="не короче 6 символов">'+
+    '<label>Повторите пароль</label><input type="password" id="np2" placeholder="ещё раз">'+
+    '<button id="np-btn">Сохранить пароль</button>'+
+    '<div class="login-err" id="np-err"></div><div class="login-ok" id="np-ok"></div>';
+  document.getElementById("login-screen").classList.remove("hidden");
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("np-btn").addEventListener("click",async()=>{
+    const e1=document.getElementById("np-err"),o1=document.getElementById("np-ok"); e1.classList.remove("show");o1.classList.remove("show");
+    const p1=document.getElementById("np1").value,p2=document.getElementById("np2").value;
+    if(p1.length<6){ e1.textContent="Пароль слишком короткий"; e1.classList.add("show"); return; }
+    if(p1!==p2){ e1.textContent="Пароли не совпадают"; e1.classList.add("show"); return; }
+    const {error}=await sb.auth.updateUser({password:p1});
+    if(error){ e1.textContent="Ошибка: "+error.message; e1.classList.add("show"); return; }
+    o1.textContent="Пароль изменён. Сейчас войдём…"; o1.classList.add("show");
+    setTimeout(()=>{ location.href=location.href.split("#")[0]; },1200);
+  });
+}
+
+/* ====== СТАРТ ====== */
+tick(); setInterval(tick,1000);
+setInterval(()=>{ if(!document.getElementById("app").classList.contains("hidden")){ renderReminders(); renderAll(); } },30000);
+// автоподтягивание свежих данных раз в 20 сек (примитивная синхронизация между людьми)
+setInterval(()=>{ if(!document.getElementById("app").classList.contains("hidden")) refreshData(); },20000);
+
+// Слушаем событие восстановления пароля
+sb.auth.onAuthStateChange((event)=>{ if(event==="PASSWORD_RECOVERY"){ handleRecovery(); } });
+
+(async()=>{
+  // если в URL есть hash восстановления — дождёмся события; иначе обычный вход
+  const isRecovery = location.hash.includes("type=recovery");
+  const {data:{session}}=await sb.auth.getSession();
+  if(isRecovery){ /* handleRecovery вызовется из onAuthStateChange */ return; }
+  if(session){ await enterApp(); }
+})();
+})();
+</script>
+</body>
+</html>
